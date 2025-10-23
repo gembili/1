@@ -1,848 +1,872 @@
-// worker.js
-import { connect } from "cloudflare:sockets";
-var listProxy = [
-  { path: "/id1", proxy: "111.95.40.14:32414" },
-  { path: "/id2", proxy: "35.219.15.90:443" },
-  { path: "/id3", proxy: "165.154.48.233:587" },
-  { path: "/id4", proxy: "43.133.145.156:53136" },  
-  { path: "/sg-byt", proxy: "89.34.227.98:8080" },
-  { path: "/sgtcc", proxy: "43.134.239.19:443" },
-  { path: "/sgtencent", proxy: "43.134.239.19:443" },
-  { path: "/sgalibaba", proxy: "8.219.50.5:29220" },
-  { path: "/sggreen", proxy: "5.34.176.119:81" },
-  { path: "/sgakamai", proxy: "143.42.68.97:17055" },
-  { path: "/sgVultr", proxy: "139.180.144.170:666" },
-  { path: "/GCPID", proxy: "35.219.50.99:443" },
-  { path: "/sgovhsas", proxy: "51.79.158.126:443" },
-  { path: "/sgdo", proxy: "159.223.34.97:4433" },
-  { path: "/sgLatitude", proxy: "64.49.14.239:443" },
-  { path: "/sgmegalayer", proxy: "103.180.161.10:587" },
-  { path: "/sgoracle", proxy: "138.2.77.179:30018" },
-  { path: "/sgbelnet", proxy: "194.36.179.237:443" },
-  { path: "/sgamazon", proxy: "54.251.167.101:443" }
-  //tambahin sendiri
-];
-var proxyIP;
-var proxyPort;
-var worker_default = {
-  async fetch(request, ctx) {
-    try {
-      proxyIP = proxyIP;
-      const url = new URL(request.url);
-      const upgradeHeader = request.headers.get("Upgrade");
-      for (const entry of listProxy) {
-        if (url.pathname === entry.path) {
-          [proxyIP, proxyPort] = entry.proxy.split(':');
-          break;
-        }
-      }
-      if (upgradeHeader === "websocket" && proxyIP) {
-        return await vlessOverWSHandler(request);
-      }
-      const allConfig = await getAllConfigVless(request.headers.get("Host"));
-      return new Response(allConfig, {
-        status: 200,
-        headers: { "Content-Type": "text/html;charset=utf-8" }
-      });
-    } catch (err) {
-      return new Response(err.toString(), { status: 500 });
-    }
-  }
+// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2023-06-22 15:20:02 UTC<!--GAMFC-END-->.
+// @ts-ignore
+import { connect } from 'cloudflare:sockets';
+
+// How to generate your own UUID:
+// [Windows] Press "Win + R", input cmd and run:  Powershell -NoExit -Command "[guid]::NewGuid()"
+let userID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
+
+const proxyIPs = ['158.178.243.152:61731,47.74.254.191:8900,138.2.81.243:45319,5.34.176.119:81,167.253.158.63:8443,8.219.59.132:48964,138.2.89.238:43254,168.138.165.174:443,8.219.59.132:48130,138.2.89.64:32962,194.36.179.17:2053,143.42.66.91:443,194.36.179.17:8443,91.192.81.154:8443,143.198.196.196:2053,138.2.69.236:23334,15.235.199.103:8443,164.52.2.100:443,47.245.95.160:1443,158.178.236.14:61731,129.150.49.58:18650,31.192.238.71:2053,45.32.100.46:13802,129.150.58.86:57621,13.250.14.76:443,194.36.179.5:2053,43.156.116.194:443,167.253.158.63:2053,213.35.100.31:47112,178.128.80.43:443,38.181.70.7:16240,143.198.196.196:8443,15.235.199.103:2053,104.248.145.216:443,8.222.220.81:25435,13.250.131.37:443,168.138.171.70:23280,146.235.19.79:28983,31.192.238.71:8443,168.138.181.188:61731,45.76.183.217:49292,164.52.2.99:443,43.156.181.203:443,51.79.158.58:8443,164.52.2.98:443,129.150.36.188:53435,194.36.178.36:2053,158.178.246.142:61731,5.223.49.4:2053,194.127.193.240:50791'];
+
+let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
+
+let dohURL = 'https://sky.rethinkdns.com/1:-Pf_____9_8A_AMAIgE8kMABVDDmKOHTAKg='; // https://cloudflare-dns.com/dns-query or https://dns.google/dns-query
+
+// v2board api environment variables (optional) deprecated, please use planetscale.com instead
+
+if (!isValidUUID(userID)) {
+	throw new Error('uuid is invalid');
+}
+
+export default {
+	/**
+	 * @param {import("@cloudflare/workers-types").Request} request
+	 * @param {{UUID: string, PROXYIP: string, DNS_RESOLVER_URL: string, NODE_ID: int, API_HOST: string, API_TOKEN: string}} env
+	 * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
+	 * @returns {Promise<Response>}
+	 */
+	async fetch(request, env, ctx) {
+		// uuid_validator(request);
+		try {
+			userID = env.UUID || userID;
+			proxyIP = env.PROXYIP || proxyIP;
+			dohURL = env.DNS_RESOLVER_URL || dohURL;
+			let userID_Path = userID;
+			if (userID.includes(',')) {
+				userID_Path = userID.split(',')[0];
+			}
+			const upgradeHeader = request.headers.get('Upgrade');
+			if (!upgradeHeader || upgradeHeader !== 'websocket') {
+				const url = new URL(request.url);
+				switch (url.pathname) {
+					case '/cf':
+						return new Response(JSON.stringify(request.cf, null, 4), {
+							status: 200,
+							headers: {
+								"Content-Type": "application/json;charset=utf-8",
+							},
+						});
+					case `/${userID_Path}`: {
+						const vlessConfig = getVLESSConfig(userID, request.headers.get('Host'));
+						return new Response(`${vlessConfig}`, {
+							status: 200,
+							headers: {
+								"Content-Type": "text/html; charset=utf-8",
+							}
+						});
+					}
+					case `/sub/${userID_Path}`: {
+						const url = new URL(request.url);
+						const searchParams = url.searchParams;
+						let vlessConfig = createVLESSSub(userID, request.headers.get('Host'));
+						// If 'format' query param equals to 'clash', convert config to base64
+						if (searchParams.get('format') === 'clash') {
+							vlessConfig = btoa(vlessConfig);
+						}
+						// Construct and return response object
+						return new Response(vlessConfig, {
+							status: 200,
+							headers: {
+								"Content-Type": "text/plain;charset=utf-8",
+							}
+						});
+					}
+					case `/bestip/${userID_Path}`: {
+						const bestiplink = `https://sub.xf.free.hr/auto?host=${request.headers.get('Host')}&uuid=${userID_Path}`
+						const reqHeaders = new Headers(request.headers);
+						const bestipresponse = await fetch(bestiplink, { redirect: 'manual', headers: reqHeaders, });
+						// Construct and return response object
+						return bestipresponse
+					}
+					default:
+						// return new Response('Not found', { status: 404 });
+						// For any other path, reverse proxy to 'www.fmprc.gov.cn' and return the original response, caching it in the process
+						const hostnames = ['www.fmprc.gov.cn', 'www.xuexi.cn', 'www.gov.cn', 'mail.gov.cn', 'www.mofcom.gov.cn', 'www.gfbzb.gov.cn', 'www.miit.gov.cn', 'www.12377.cn'];
+						url.hostname = hostnames[Math.floor(Math.random() * hostnames.length)];
+						url.protocol = 'https:';
+
+						const newHeaders = new Headers(request.headers);
+						newHeaders.set('cf-connecting-ip', newHeaders.get('x-forwarded-for') || newHeaders.get('cf-connecting-ip'));
+						newHeaders.set('x-forwarded-for', newHeaders.get('cf-connecting-ip'));
+						newHeaders.set('x-real-ip', newHeaders.get('cf-connecting-ip'));
+						newHeaders.set('referer', 'https://www.google.com/q=edtunnel');
+
+						request = new Request(url, {
+							method: request.method,
+							headers: newHeaders,
+							body: request.body,
+							redirect: request.redirect,
+						});
+
+						const cache = caches.default;
+						let response = await cache.match(request);
+
+						if (!response) {
+							try {
+								response = await fetch(request, { redirect: 'manual' });
+							} catch (err) {
+								url.protocol = 'http:';
+								url.hostname = hostnames[Math.floor(Math.random() * hostnames.length)];
+								request = new Request(url, {
+									method: request.method,
+									headers: newHeaders,
+									body: request.body,
+									redirect: request.redirect,
+								});
+								response = await fetch(request, { redirect: 'manual' });
+							}
+
+							const cloneResponse = response.clone();
+							ctx.waitUntil(cache.put(request, cloneResponse));
+						}
+						return response;
+				}
+			} else {
+				return await vlessOverWSHandler(request);
+			}
+		} catch (err) {
+			/** @type {Error} */ let e = err;
+			return new Response(e.toString());
+		}
+	},
 };
-async function getAllConfigVless(hostName) {
-  try {
-    let vlessConfigs = "";
-    let clashConfigs = "";
-    for (const entry of listProxy) {
-      const { path, proxy } = entry;
-      const [ipOnly] = proxy.split(':');
-      const response = await fetch(`http://ip-api.com/json/${ipOnly}`);
-      const data = await response.json();
-      const pathFixed = encodeURIComponent(path);
-      const vlessTls = `vless://${generateUUIDv4()}@${hostName}:443?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=${pathFixed}#${data.isp} (${data.countryCode})`;
-      const vlessNtls = `vless://${generateUUIDv4()}@${hostName}:80?path=${pathFixed}&security=none&encryption=none&host=${hostName}&fp=randomized&type=ws&sni=${hostName}#${data.isp} (${data.countryCode})`;
-      const vlessTlsFixed = vlessTls.replace(/ /g, "+");
-      const vlessNtlsFixed = vlessNtls.replace(/ /g, "+");
-      vlessConfigs += `<div class="config-section">
-    <p><strong>ISP  :  ${data.isp} (${data.countryCode}) </strong> </p>
-    <hr />
-    <div class="config-toggle">
-        <button class="button" onclick="toggleConfig(this, 'show vless', 'hide vless')">Show Vless</button>
-        <div class="config-content">
-            <div class="config-block">
-                <h3>TLS:</h3>
-                <p class="config">${vlessTlsFixed}</p>
-                <button class="button" onclick='copyToClipboard("${vlessTlsFixed}")'><i class="fa fa-clipboard"></i>Copy</button>
-            </div>
-            <hr />
-            <div class="config-block">
-                <h3>NTLS:</h3>
-                <p class="config">${vlessNtlsFixed}</p>
-                <button class="button" onclick='copyToClipboard("${vlessNtlsFixed}")'><i class="fa fa-clipboard"></i>Copy</button>
-            </div>
-            <hr />
-        </div>
-    </div>
-</div>
-<hr class="config-divider" />
-`;
-    }
-    const htmlConfigs = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vless | Noir7R | CLoudFlare</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4C+6PCWJ+8zzHcXQjXGp6n5Yh9rX0x5fOdPaOqO+e2X4R5C1aE/BSqPIG+8y3O6APa8w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="icon" href="https://raw.githubusercontent.com/AFRcloud/BG/main/icons8-film-noir-80.png" type="image/png">
-    <style>
-    body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
-    color: #f5f5f5;
-    background-color: #2d3b48; /* Dark Blue-gray */
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    min-height: 100vh;
-    overflow: hidden;
+
+export async function uuid_validator(request) {
+	const hostname = request.headers.get('Host');
+	const currentDate = new Date();
+
+	const subdomain = hostname.split('.')[0];
+	const year = currentDate.getFullYear();
+	const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+	const day = String(currentDate.getDate()).padStart(2, '0');
+
+	const formattedDate = `${year}-${month}-${day}`;
+
+	// const daliy_sub = formattedDate + subdomain
+	const hashHex = await hashHex_f(subdomain);
+	// subdomain string contains timestamps utc and uuid string TODO.
+	console.log(hashHex, subdomain, formattedDate);
 }
 
-.container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 3px;
-    background: rgba(0, 0, 0, 0.8); /* Dark transparent background */
-    backdrop-filter: blur(10px);
-    animation: fadeIn 1s ease-in-out;
-    overflow-y: auto;
-    max-height: 100vh;
+export async function hashHex_f(string) {
+	const encoder = new TextEncoder();
+	const data = encoder.encode(string);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+	return hashHex;
 }
 
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 15, 15, 0.4);
-    z-index: -1;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.header h1 {
-    text-align: center;
-    margin: 10px 0 40px;
-    font-size: 42px;
-    color: #f39c12; /* Golden Yellow */
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-}
-
-.nav-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-}
-
-.nav-buttons .button {
-    background-color: transparent;
-    border: 3px solid #f39c12; /* Golden Yellow */
-    color: #f39c12;
-    padding: 6px 12px;
-    font-size: 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: 0.3s;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-}
-
-.nav-buttons .button:hover {
-    background-color: #f39c12; /* Golden Yellow */
-    color: #fff;
-    transform: scale(1.05);
-}
-
-.content {
-    display: none;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-}
-
-.content.active {
-    display: block;
-    opacity: 1;
-}
-
-.config-section {
-    background: rgba(44, 62, 80, 0.7); /* Dark Slate Blue */
-    padding: 20px;
-    border: 2px solid #f39c12;
-    border-radius: 10px;
-    position: relative;
-    animation: slideIn 0.5s ease-in-out;
-}
-
-@keyframes slideIn {
-    from { transform: translateX(-30px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-.config-section h3 {
-    color: #e74c3c; /* Red */
-    font-size: 28px;
-    margin-top: 0;
-}
-
-.config-section p {
-    font-size: 16px;
-    color: #ecf0f1; /* Light Gray */
-}
-
-.config-toggle {
-    margin-bottom: 10px;
-}
-
-.config-content {
-    display: none;
-}
-
-.config-content.active {
-    display: block;
-}
-
-.config-block {
-    margin-bottom: 10px;
-    padding: 15px;
-    border-radius: 10px;
-    background-color: rgba(52, 152, 219, 0.2); /* Light Blue */
-    transition: background-color 0.3s;
-}
-
-.config-block h4 {
-    color: #2980b9; /* Blue */
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.config {
-    background-color: rgba(44, 62, 80, 0.3); /* Dark Slate Blue */
-    padding: 15px;
-    border-radius: 5px;
-    border: 2px solid #f39c12;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 15px;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-}
-
-.button {
-    background-color: transparent;
-    border: 2px solid #f39c12; /* Golden Yellow */
-    color: #f39c12;
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: 0.3s;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-right: 4px;
-}
-
-.button i {
-    margin-right: 3px;
-}
-
-.button:hover {
-    background-color: #f39c12; /* Golden Yellow */
-    color: #fff;
-}
-
-.config-divider {
-    height: 1px;
-    background: linear-gradient(to right, transparent, #fff, transparent);
-    margin: 20px 0;
-}
-
-.watermark {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.5);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    font-weight: bold;
-    text-align: center;
-}
-
-.watermark a {
-    color: #e74c3c; /* Red */
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.watermark a:hover {
-    color: #e74c3c; /* Red */
-}
-
-@media (max-width: 768px) {
-    .header h1 { font-size: 32px; }
-    .config-section h3 { font-size: 24px; }
-    .config-block h4 { font-size: 20px; }
-}
-
-    </style>
-</head>
-<body>
-    <div class="overlay"></div>
-    <div class="container">
-        <div class="header">
-            <h1>VLESS CLOUDFLARE</h1>
-        </div>
-        <div class="config-section">
-        <strong>LIST WILLCARD : </strong><br>
-        <br>
-        \u2730 ava.game.naver.com<br>
-        \u2730 graph.instagram.com<br>
-        \u2730 quiz.int.vidio.com<br>
-        \u2730 live.iflix.com<br>
-        \u2730 support.zoom.us<br>
-        \u2730 blog.webex.com<br>
-        \u2730 cache.netflix.com<br>
-        \u2730 investors.spotify.com<br>
-        \u2730 zaintest.vuclip.com<br>
-        </div>
-        <hr class="config-divider" />
-        <div id="vless" class="content active">
-            ${vlessConfigs}
-        </div>
-    </div>
-    <script>
-        function showContent(contentId) {
-            const contents = document.querySelectorAll('.content');
-            contents.forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(contentId).classList.add('active');
-        }
-        function salinTeks() {
-            var teks = document.getElementById('teksAsli');
-            teks.select();
-            document.execCommand('copy');
-            alert('Teks telah disalin.');
-        }
-        function copyClash(elementId) {
-            const text = document.getElementById(elementId).textContent;
-            navigator.clipboard.writeText(text)
-            .then(() => {
-            const alertBox = document.createElement('div');
-            alertBox.textContent = "Copied to clipboard!";
-            alertBox.style.position = 'fixed';
-            alertBox.style.bottom = '20px';
-            alertBox.style.right = '20px';
-            alertBox.style.backgroundColor = 'yellow';
-            alertBox.style.color = '#fff';
-            alertBox.style.padding = '10px 20px';
-            alertBox.style.borderRadius = '5px';
-            alertBox.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-            alertBox.style.opacity = '0';
-            alertBox.style.transition = 'opacity 0.5s ease-in-out';
-            document.body.appendChild(alertBox);
-            setTimeout(() => {
-                alertBox.style.opacity = '1';
-            }, 100);
-            setTimeout(() => {
-                alertBox.style.opacity = '0';
-                setTimeout(() => {
-                    document.body.removeChild(alertBox);
-                }, 500);
-            }, 2000);
-        })
-        .catch((err) => {
-            console.error("Failed to copy to clipboard:", err);
-        });
-        }
-function fetchAndDisplayAlert(path) {
-    fetch(path)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(\`HTTP error! Status: \${response.status}\`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            const proxyStatus = data.proxyStatus || "Unknown status";
-            const alertBox = document.createElement('div');
-            alertBox.textContent = \`Proxy Status: \${proxyStatus}\`;
-            alertBox.style.position = 'fixed';
-            alertBox.style.bottom = '20px';
-            alertBox.style.right = '20px';
-            alertBox.style.backgroundColor = 'yellow';
-            alertBox.style.color = '#fff';
-            alertBox.style.padding = '10px 20px';
-            alertBox.style.borderRadius = '5px';
-            alertBox.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-            alertBox.style.opacity = '0';
-            alertBox.style.transition = 'opacity 0.5s ease-in-out';
-            document.body.appendChild(alertBox);
-            
-            setTimeout(() => {
-                alertBox.style.opacity = '1';
-            }, 100);
-            
-            setTimeout(() => {
-                alertBox.style.opacity = '0';
-                setTimeout(() => {
-                    document.body.removeChild(alertBox);
-                }, 500);
-            }, 2000);
-        })
-        .catch((err) => {
-            alert("Failed to fetch data or invalid response.");
-        });
-}
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text)
-                .then(() => {
-                    const alertBox = document.createElement('div');
-                    alertBox.textContent = "Copied to clipboard!";
-                    alertBox.style.position = 'fixed';
-                    alertBox.style.bottom = '20px';
-                    alertBox.style.right = '20px';
-                    alertBox.style.backgroundColor = 'yellow';
-                    alertBox.style.color = '#fff';
-                    alertBox.style.padding = '10px 20px';
-                    alertBox.style.borderRadius = '5px';
-                    alertBox.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                    alertBox.style.opacity = '0';
-                    alertBox.style.transition = 'opacity 0.5s ease-in-out';
-                    document.body.appendChild(alertBox);
-                    setTimeout(() => {
-                        alertBox.style.opacity = '1';
-                    }, 100);
-                    setTimeout(() => {
-                        alertBox.style.opacity = '0';
-                        setTimeout(() => {
-                            document.body.removeChild(alertBox);
-                        }, 500);
-                    }, 2000);
-                })
-                .catch((err) => {
-                    console.error("Failed to copy to clipboard:", err);
-                });
-        }
-
-        function toggleConfig(button, show, hide) {
-            const configContent = button.nextElementSibling;
-            if (configContent.classList.contains('active')) {
-                configContent.classList.remove('active');
-                button.textContent = show;
-            } else {
-                configContent.classList.add('active');
-                button.textContent = hide;
-            }
-        }
-    <\/script>
-</body>
-</html>`;
-    return htmlConfigs;
-  } catch (error) {
-    return `An error occurred while generating the VLESS configurations. ${error}`;
-  }
-}
-function generateUUIDv4() {
-  const randomValues = crypto.getRandomValues(new Uint8Array(16));
-  randomValues[6] = randomValues[6] & 15 | 64;
-  randomValues[8] = randomValues[8] & 63 | 128;
-  return [
-    randomValues[0].toString(16).padStart(2, "0"),
-    randomValues[1].toString(16).padStart(2, "0"),
-    randomValues[2].toString(16).padStart(2, "0"),
-    randomValues[3].toString(16).padStart(2, "0"),
-    randomValues[4].toString(16).padStart(2, "0"),
-    randomValues[5].toString(16).padStart(2, "0"),
-    randomValues[6].toString(16).padStart(2, "0"),
-    randomValues[7].toString(16).padStart(2, "0"),
-    randomValues[8].toString(16).padStart(2, "0"),
-    randomValues[9].toString(16).padStart(2, "0"),
-    randomValues[10].toString(16).padStart(2, "0"),
-    randomValues[11].toString(16).padStart(2, "0"),
-    randomValues[12].toString(16).padStart(2, "0"),
-    randomValues[13].toString(16).padStart(2, "0"),
-    randomValues[14].toString(16).padStart(2, "0"),
-    randomValues[15].toString(16).padStart(2, "0")
-  ].join("").replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
-}
+/**
+ * Handles VLESS over WebSocket requests by creating a WebSocket pair, accepting the WebSocket connection, and processing the VLESS header.
+ * @param {import("@cloudflare/workers-types").Request} request The incoming request object.
+ * @returns {Promise<Response>} A Promise that resolves to a WebSocket response object.
+ */
 async function vlessOverWSHandler(request) {
-  const webSocketPair = new WebSocketPair();
-  const [client, webSocket] = Object.values(webSocketPair);
-  webSocket.accept();
-  let address = "";
-  let portWithRandomLog = "";
-  const log = (info, event) => {
-    console.log(`[${address}:${portWithRandomLog}] ${info}`, event || "");
-  };
-  const earlyDataHeader = request.headers.get("sec-websocket-protocol") || "";
-  const readableWebSocketStream = makeReadableWebSocketStream(webSocket, earlyDataHeader, log);
-  let remoteSocketWapper = {
-    value: null
-  };
-  let udpStreamWrite = null;
-  let isDns = false;
-  readableWebSocketStream.pipeTo(new WritableStream({
-    async write(chunk, controller) {
-      if (isDns && udpStreamWrite) {
-        return udpStreamWrite(chunk);
-      }
-      if (remoteSocketWapper.value) {
-        const writer = remoteSocketWapper.value.writable.getWriter();
-        await writer.write(chunk);
-        writer.releaseLock();
-        return;
-      }
-      const {
-        hasError,
-        message,
-        portRemote = 443,
-        addressRemote = "",
-        rawDataIndex,
-        vlessVersion = new Uint8Array([0, 0]),
-        isUDP
-      } = processVlessHeader(chunk);
-      address = addressRemote;
-      portWithRandomLog = `${portRemote}--${Math.random()} ${isUDP ? "udp " : "tcp "} `;
-      if (hasError) {
-        throw new Error(message);
-        return;
-      }
-      if (isUDP) {
-        if (portRemote === 53) {
-          isDns = true;
-        } else {
-          throw new Error("UDP proxy only enable for DNS which is port 53");
-          return;
-        }
-      }
-      const vlessResponseHeader = new Uint8Array([vlessVersion[0], 0]);
-      const rawClientData = chunk.slice(rawDataIndex);
-      if (isDns) {
-        const { write } = await handleUDPOutBound(webSocket, vlessResponseHeader, log);
-        udpStreamWrite = write;
-        udpStreamWrite(rawClientData);
-        return;
-      }
-      handleTCPOutBound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log);
-    },
-    close() {
-      log(`readableWebSocketStream is close`);
-    },
-    abort(reason) {
-      log(`readableWebSocketStream is abort`, JSON.stringify(reason));
-    }
-  })).catch((err) => {
-    log("readableWebSocketStream pipeTo error", err);
-  });
-  return new Response(null, {
-    status: 101,
-    webSocket: client
-  });
+	const webSocketPair = new WebSocketPair();
+	const [client, webSocket] = Object.values(webSocketPair);
+	webSocket.accept();
+
+	let address = '';
+	let portWithRandomLog = '';
+	let currentDate = new Date();
+	const log = (/** @type {string} */ info, /** @type {string | undefined} */ event) => {
+		console.log(`[${currentDate} ${address}:${portWithRandomLog}] ${info}`, event || '');
+	};
+	const earlyDataHeader = request.headers.get('sec-websocket-protocol') || '';
+
+	const readableWebSocketStream = makeReadableWebSocketStream(webSocket, earlyDataHeader, log);
+
+	/** @type {{ value: import("@cloudflare/workers-types").Socket | null}}*/
+	let remoteSocketWapper = {
+		value: null,
+	};
+	let udpStreamWrite = null;
+	let isDns = false;
+
+	// ws --> remote
+	readableWebSocketStream.pipeTo(new WritableStream({
+		async write(chunk, controller) {
+			if (isDns && udpStreamWrite) {
+				return udpStreamWrite(chunk);
+			}
+			if (remoteSocketWapper.value) {
+				const writer = remoteSocketWapper.value.writable.getWriter()
+				await writer.write(chunk);
+				writer.releaseLock();
+				return;
+			}
+
+			const {
+				hasError,
+				message,
+				portRemote = 443,
+				addressRemote = '',
+				rawDataIndex,
+				vlessVersion = new Uint8Array([0, 0]),
+				isUDP,
+			} = processVlessHeader(chunk, userID);
+			address = addressRemote;
+			portWithRandomLog = `${portRemote} ${isUDP ? 'udp' : 'tcp'} `;
+			if (hasError) {
+				// controller.error(message);
+				throw new Error(message); // cf seems has bug, controller.error will not end stream
+				// webSocket.close(1000, message);
+				return;
+			}
+
+			// If UDP and not DNS port, close it
+			if (isUDP && portRemote !== 53) {
+				throw new Error('UDP proxy only enabled for DNS which is port 53');
+				// cf seems has bug, controller.error will not end stream
+			}
+
+			if (isUDP && portRemote === 53) {
+				isDns = true;
+			}
+
+			// ["version", "附加信息长度 N"]
+			const vlessResponseHeader = new Uint8Array([vlessVersion[0], 0]);
+			const rawClientData = chunk.slice(rawDataIndex);
+
+			// TODO: support udp here when cf runtime has udp support
+			if (isDns) {
+				const { write } = await handleUDPOutBound(webSocket, vlessResponseHeader, log);
+				udpStreamWrite = write;
+				udpStreamWrite(rawClientData);
+				return;
+			}
+			handleTCPOutBound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log);
+		},
+		close() {
+			log(`readableWebSocketStream is close`);
+		},
+		abort(reason) {
+			log(`readableWebSocketStream is abort`, JSON.stringify(reason));
+		},
+	})).catch((err) => {
+		log('readableWebSocketStream pipeTo error', err);
+	});
+
+	return new Response(null, {
+		status: 101,
+		webSocket: client,
+	});
 }
-async function handleTCPOutBound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log) {
-  async function connectAndWrite(address, port) {
-    const tcpSocket2 = connect({
-      hostname: address,
-      port
-    });
-    remoteSocket.value = tcpSocket2;
-    log(`connected to ${address}:${port}`);
-    const writer = tcpSocket2.writable.getWriter();
-    await writer.write(rawClientData);
-    writer.releaseLock();
-    return tcpSocket2;
-  }
-  async function retry() {
-    const tcpSocket2 = await connectAndWrite(proxyIP || addressRemote, proxyPort || portRemote);
-    tcpSocket2.closed.catch((error) => {
-      console.log("retry tcpSocket closed error", error);
-    }).finally(() => {
-      safeCloseWebSocket(webSocket);
-    });
-    remoteSocketToWS(tcpSocket2, webSocket, vlessResponseHeader, null, log);
-  }
-  const tcpSocket = await connectAndWrite(addressRemote, portRemote);
-  remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, retry, log);
+
+/**
+ * Handles outbound TCP connections.
+ *
+ * @param {any} remoteSocket 
+ * @param {string} addressRemote The remote address to connect to.
+ * @param {number} portRemote The remote port to connect to.
+ * @param {Uint8Array} rawClientData The raw client data to write.
+ * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket to pass the remote socket to.
+ * @param {Uint8Array} vlessResponseHeader The VLESS response header.
+ * @param {function} log The logging function.
+ * @returns {Promise<void>} The remote socket.
+ */
+async function handleTCPOutBound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log,) {
+
+	/**
+	 * Connects to a given address and port and writes data to the socket.
+	 * @param {string} address The address to connect to.
+	 * @param {number} port The port to connect to.
+	 * @returns {Promise<import("@cloudflare/workers-types").Socket>} A Promise that resolves to the connected socket.
+	 */
+	async function connectAndWrite(address, port) {
+		/** @type {import("@cloudflare/workers-types").Socket} */
+		const tcpSocket = connect({
+			hostname: address,
+			port: port,
+		});
+		remoteSocket.value = tcpSocket;
+		log(`connected to ${address}:${port}`);
+		const writer = tcpSocket.writable.getWriter();
+		await writer.write(rawClientData); // first write, nomal is tls client hello
+		writer.releaseLock();
+		return tcpSocket;
+	}
+
+	/**
+	 * Retries connecting to the remote address and port if the Cloudflare socket has no incoming data.
+	 * @returns {Promise<void>} A Promise that resolves when the retry is complete.
+	 */
+	async function retry() {
+		const tcpSocket = await connectAndWrite(proxyIP || addressRemote, portRemote)
+		tcpSocket.closed.catch(error => {
+			console.log('retry tcpSocket closed error', error);
+		}).finally(() => {
+			safeCloseWebSocket(webSocket);
+		})
+		remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null, log);
+	}
+
+	const tcpSocket = await connectAndWrite(addressRemote, portRemote);
+
+	// when remoteSocket is ready, pass to websocket
+	// remote--> ws
+	remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, retry, log);
 }
+
+/**
+ * Creates a readable stream from a WebSocket server, allowing for data to be read from the WebSocket.
+ * @param {import("@cloudflare/workers-types").WebSocket} webSocketServer The WebSocket server to create the readable stream from.
+ * @param {string} earlyDataHeader The header containing early data for WebSocket 0-RTT.
+ * @param {(info: string)=> void} log The logging function.
+ * @returns {ReadableStream} A readable stream that can be used to read data from the WebSocket.
+ */
 function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
-  let readableStreamCancel = false;
-  const stream = new ReadableStream({
-    start(controller) {
-      webSocketServer.addEventListener("message", (event) => {
-        if (readableStreamCancel) {
-          return;
-        }
-        const message = event.data;
-        controller.enqueue(message);
-      });
-      webSocketServer.addEventListener(
-        "close",
-        () => {
-          safeCloseWebSocket(webSocketServer);
-          if (readableStreamCancel) {
-            return;
-          }
-          controller.close();
-        }
-      );
-      webSocketServer.addEventListener(
-        "error",
-        (err) => {
-          log("webSocketServer has error");
-          controller.error(err);
-        }
-      );
-      const { earlyData, error } = base64ToArrayBuffer(earlyDataHeader);
-      if (error) {
-        controller.error(error);
-      } else if (earlyData) {
-        controller.enqueue(earlyData);
-      }
-    },
-    pull(controller) {
-    },
-    cancel(reason) {
-      if (readableStreamCancel) {
-        return;
-      }
-      log(`ReadableStream was canceled, due to ${reason}`);
-      readableStreamCancel = true;
-      safeCloseWebSocket(webSocketServer);
-    }
-  });
-  return stream;
+	let readableStreamCancel = false;
+	const stream = new ReadableStream({
+		start(controller) {
+			webSocketServer.addEventListener('message', (event) => {
+				const message = event.data;
+				controller.enqueue(message);
+			});
+
+			webSocketServer.addEventListener('close', () => {
+				safeCloseWebSocket(webSocketServer);
+				controller.close();
+			});
+
+			webSocketServer.addEventListener('error', (err) => {
+				log('webSocketServer has error');
+				controller.error(err);
+			});
+			const { earlyData, error } = base64ToArrayBuffer(earlyDataHeader);
+			if (error) {
+				controller.error(error);
+			} else if (earlyData) {
+				controller.enqueue(earlyData);
+			}
+		},
+
+		pull(controller) {
+			// if ws can stop read if stream is full, we can implement backpressure
+			// https://streams.spec.whatwg.org/#example-rs-push-backpressure
+		},
+
+		cancel(reason) {
+			log(`ReadableStream was canceled, due to ${reason}`)
+			readableStreamCancel = true;
+			safeCloseWebSocket(webSocketServer);
+		}
+	});
+
+	return stream;
 }
-function processVlessHeader(vlessBuffer) {
-  if (vlessBuffer.byteLength < 24) {
-    return {
-      hasError: true,
-      message: "invalid data"
-    };
-  }
-  const version = new Uint8Array(vlessBuffer.slice(0, 1));
-  let isValidUser = true;
-  let isUDP = false;
-  if (!isValidUser) {
-    return {
-      hasError: true,
-      message: "invalid user"
-    };
-  }
-  const optLength = new Uint8Array(vlessBuffer.slice(17, 18))[0];
-  const command = new Uint8Array(
-    vlessBuffer.slice(18 + optLength, 18 + optLength + 1)
-  )[0];
-  if (command === 1) {
-  } else if (command === 2) {
-    isUDP = true;
-  } else {
-    return {
-      hasError: true,
-      message: `command ${command} is not support, command 01-tcp,02-udp,03-mux`
-    };
-  }
-  const portIndex = 18 + optLength + 1;
-  const portBuffer = vlessBuffer.slice(portIndex, portIndex + 2);
-  const portRemote = new DataView(portBuffer).getUint16(0);
-  let addressIndex = portIndex + 2;
-  const addressBuffer = new Uint8Array(
-    vlessBuffer.slice(addressIndex, addressIndex + 1)
-  );
-  const addressType = addressBuffer[0];
-  let addressLength = 0;
-  let addressValueIndex = addressIndex + 1;
-  let addressValue = "";
-  switch (addressType) {
-    case 1:
-      addressLength = 4;
-      addressValue = new Uint8Array(
-        vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
-      ).join(".");
-      break;
-    case 2:
-      addressLength = new Uint8Array(
-        vlessBuffer.slice(addressValueIndex, addressValueIndex + 1)
-      )[0];
-      addressValueIndex += 1;
-      addressValue = new TextDecoder().decode(
-        vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
-      );
-      break;
-    case 3:
-      addressLength = 16;
-      const dataView = new DataView(
-        vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
-      );
-      const ipv6 = [];
-      for (let i = 0; i < 8; i++) {
-        ipv6.push(dataView.getUint16(i * 2).toString(16));
-      }
-      addressValue = ipv6.join(":");
-      break;
-    default:
-      return {
-        hasError: true,
-        message: `invild  addressType is ${addressType}`
-      };
-  }
-  if (!addressValue) {
-    return {
-      hasError: true,
-      message: `addressValue is empty, addressType is ${addressType}`
-    };
-  }
-  return {
-    hasError: false,
-    addressRemote: addressValue,
-    addressType,
-    portRemote,
-    rawDataIndex: addressValueIndex + addressLength,
-    vlessVersion: version,
-    isUDP
-  };
+
+// https://xtls.github.io/development/protocols/vless.html
+// https://github.com/zizifn/excalidraw-backup/blob/main/v2ray-protocol.excalidraw
+
+/**
+ * Processes the VLESS header buffer and returns an object with the relevant information.
+ * @param {ArrayBuffer} vlessBuffer The VLESS header buffer to process.
+ * @param {string} userID The user ID to validate against the UUID in the VLESS header.
+ * @returns {{
+ *  hasError: boolean,
+ *  message?: string,
+ *  addressRemote?: string,
+ *  addressType?: number,
+ *  portRemote?: number,
+ *  rawDataIndex?: number,
+ *  vlessVersion?: Uint8Array,
+ *  isUDP?: boolean
+ * }} An object with the relevant information extracted from the VLESS header buffer.
+ */
+function processVlessHeader(vlessBuffer, userID) {
+	if (vlessBuffer.byteLength < 24) {
+		return {
+			hasError: true,
+			message: 'invalid data',
+		};
+	}
+
+	const version = new Uint8Array(vlessBuffer.slice(0, 1));
+	let isValidUser = false;
+	let isUDP = false;
+	const slicedBuffer = new Uint8Array(vlessBuffer.slice(1, 17));
+	const slicedBufferString = stringify(slicedBuffer);
+	// check if userID is valid uuid or uuids split by , and contains userID in it otherwise return error message to console
+	const uuids = userID.includes(',') ? userID.split(",") : [userID];
+	// uuid_validator(hostName, slicedBufferString);
+
+
+	// isValidUser = uuids.some(userUuid => slicedBufferString === userUuid.trim());
+	isValidUser = uuids.some(userUuid => slicedBufferString === userUuid.trim()) || uuids.length === 1 && slicedBufferString === uuids[0].trim();
+
+	console.log(`userID: ${slicedBufferString}`);
+
+	if (!isValidUser) {
+		return {
+			hasError: true,
+			message: 'invalid user',
+		};
+	}
+
+	const optLength = new Uint8Array(vlessBuffer.slice(17, 18))[0];
+	//skip opt for now
+
+	const command = new Uint8Array(
+		vlessBuffer.slice(18 + optLength, 18 + optLength + 1)
+	)[0];
+
+	// 0x01 TCP
+	// 0x02 UDP
+	// 0x03 MUX
+	if (command === 1) {
+		isUDP = false;
+	} else if (command === 2) {
+		isUDP = true;
+	} else {
+		return {
+			hasError: true,
+			message: `command ${command} is not support, command 01-tcp,02-udp,03-mux`,
+		};
+	}
+	const portIndex = 18 + optLength + 1;
+	const portBuffer = vlessBuffer.slice(portIndex, portIndex + 2);
+	// port is big-Endian in raw data etc 80 == 0x005d
+	const portRemote = new DataView(portBuffer).getUint16(0);
+
+	let addressIndex = portIndex + 2;
+	const addressBuffer = new Uint8Array(
+		vlessBuffer.slice(addressIndex, addressIndex + 1)
+	);
+
+	// 1--> ipv4  addressLength =4
+	// 2--> domain name addressLength=addressBuffer[1]
+	// 3--> ipv6  addressLength =16
+	const addressType = addressBuffer[0];
+	let addressLength = 0;
+	let addressValueIndex = addressIndex + 1;
+	let addressValue = '';
+	switch (addressType) {
+		case 1:
+			addressLength = 4;
+			addressValue = new Uint8Array(
+				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
+			).join('.');
+			break;
+		case 2:
+			addressLength = new Uint8Array(
+				vlessBuffer.slice(addressValueIndex, addressValueIndex + 1)
+			)[0];
+			addressValueIndex += 1;
+			addressValue = new TextDecoder().decode(
+				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
+			);
+			break;
+		case 3:
+			addressLength = 16;
+			const dataView = new DataView(
+				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
+			);
+			// 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+			const ipv6 = [];
+			for (let i = 0; i < 8; i++) {
+				ipv6.push(dataView.getUint16(i * 2).toString(16));
+			}
+			addressValue = ipv6.join(':');
+			// seems no need add [] for ipv6
+			break;
+		default:
+			return {
+				hasError: true,
+				message: `invild  addressType is ${addressType}`,
+			};
+	}
+	if (!addressValue) {
+		return {
+			hasError: true,
+			message: `addressValue is empty, addressType is ${addressType}`,
+		};
+	}
+
+	return {
+		hasError: false,
+		addressRemote: addressValue,
+		addressType,
+		portRemote,
+		rawDataIndex: addressValueIndex + addressLength,
+		vlessVersion: version,
+		isUDP,
+	};
 }
+
+
+/**
+ * Converts a remote socket to a WebSocket connection.
+ * @param {import("@cloudflare/workers-types").Socket} remoteSocket The remote socket to convert.
+ * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket to connect to.
+ * @param {ArrayBuffer | null} vlessResponseHeader The VLESS response header.
+ * @param {(() => Promise<void>) | null} retry The function to retry the connection if it fails.
+ * @param {(info: string) => void} log The logging function.
+ * @returns {Promise<void>} A Promise that resolves when the conversion is complete.
+ */
 async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, retry, log) {
-  let remoteChunkCount = 0;
-  let chunks = [];
-  let vlessHeader = vlessResponseHeader;
-  let hasIncomingData = false;
-  await remoteSocket.readable.pipeTo(
-    new WritableStream({
-      start() {
-      },
-      async write(chunk, controller) {
-        hasIncomingData = true;
-        if (webSocket.readyState !== WS_READY_STATE_OPEN) {
-          controller.error(
-            "webSocket.readyState is not open, maybe close"
-          );
-        }
-        if (vlessHeader) {
-          webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
-          vlessHeader = null;
-        } else {
-          webSocket.send(chunk);
-        }
-      },
-      close() {
-        log(`remoteConnection!.readable is close with hasIncomingData is ${hasIncomingData}`);
-      },
-      abort(reason) {
-        console.error(`remoteConnection!.readable abort`, reason);
-      }
-    })
-  ).catch((error) => {
-    console.error(
-      `remoteSocketToWS has exception `,
-      error.stack || error
-    );
-    safeCloseWebSocket(webSocket);
-  });
-  if (hasIncomingData === false && retry) {
-    log(`retry`);
-    retry();
-  }
+	// remote--> ws
+	let remoteChunkCount = 0;
+	let chunks = [];
+	/** @type {ArrayBuffer | null} */
+	let vlessHeader = vlessResponseHeader;
+	let hasIncomingData = false; // check if remoteSocket has incoming data
+	await remoteSocket.readable
+		.pipeTo(
+			new WritableStream({
+				start() {
+				},
+				/**
+				 * 
+				 * @param {Uint8Array} chunk 
+				 * @param {*} controller 
+				 */
+				async write(chunk, controller) {
+					hasIncomingData = true;
+					remoteChunkCount++;
+					if (webSocket.readyState !== WS_READY_STATE_OPEN) {
+						controller.error(
+							'webSocket.readyState is not open, maybe close'
+						);
+					}
+					if (vlessHeader) {
+						webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
+						vlessHeader = null;
+					} else {
+						// console.log(`remoteSocketToWS send chunk ${chunk.byteLength}`);
+						// seems no need rate limit this, CF seems fix this??..
+						// if (remoteChunkCount > 20000) {
+						// 	// cf one package is 4096 byte(4kb),  4096 * 20000 = 80M
+						// 	await delay(1);
+						// }
+						webSocket.send(chunk);
+					}
+				},
+				close() {
+					log(`remoteConnection!.readable is close with hasIncomingData is ${hasIncomingData}`);
+					// safeCloseWebSocket(webSocket); // no need server close websocket frist for some case will casue HTTP ERR_CONTENT_LENGTH_MISMATCH issue, client will send close event anyway.
+				},
+				abort(reason) {
+					console.error(`remoteConnection!.readable abort`, reason);
+				},
+			})
+		)
+		.catch((error) => {
+			console.error(
+				`remoteSocketToWS has exception `,
+				error.stack || error
+			);
+			safeCloseWebSocket(webSocket);
+		});
+
+	// seems is cf connect socket have error,
+	// 1. Socket.closed will have error
+	// 2. Socket.readable will be close without any data coming
+	if (hasIncomingData === false && retry) {
+		log(`retry`)
+		retry();
+	}
 }
+
+/**
+ * Decodes a base64 string into an ArrayBuffer.
+ * @param {string} base64Str The base64 string to decode.
+ * @returns {{earlyData: ArrayBuffer|null, error: Error|null}} An object containing the decoded ArrayBuffer or null if there was an error, and any error that occurred during decoding or null if there was no error.
+ */
 function base64ToArrayBuffer(base64Str) {
-  if (!base64Str) {
-    return { error: null };
-  }
-  try {
-    base64Str = base64Str.replace(/-/g, "+").replace(/_/g, "/");
-    const decode = atob(base64Str);
-    const arryBuffer = Uint8Array.from(decode, (c) => c.charCodeAt(0));
-    return { earlyData: arryBuffer.buffer, error: null };
-  } catch (error) {
-    return { error };
-  }
+	if (!base64Str) {
+		return { earlyData: null, error: null };
+	}
+	try {
+		// go use modified Base64 for URL rfc4648 which js atob not support
+		base64Str = base64Str.replace(/-/g, '+').replace(/_/g, '/');
+		const decode = atob(base64Str);
+		const arryBuffer = Uint8Array.from(decode, (c) => c.charCodeAt(0));
+		return { earlyData: arryBuffer.buffer, error: null };
+	} catch (error) {
+		return { earlyData: null, error };
+	}
 }
-var WS_READY_STATE_OPEN = 1;
-var WS_READY_STATE_CLOSING = 2;
+
+/**
+ * Checks if a given string is a valid UUID.
+ * Note: This is not a real UUID validation.
+ * @param {string} uuid The string to validate as a UUID.
+ * @returns {boolean} True if the string is a valid UUID, false otherwise.
+ */
+function isValidUUID(uuid) {
+	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+	return uuidRegex.test(uuid);
+}
+
+const WS_READY_STATE_OPEN = 1;
+const WS_READY_STATE_CLOSING = 2;
+/**
+ * Closes a WebSocket connection safely without throwing exceptions.
+ * @param {import("@cloudflare/workers-types").WebSocket} socket The WebSocket connection to close.
+ */
 function safeCloseWebSocket(socket) {
-  try {
-    if (socket.readyState === WS_READY_STATE_OPEN || socket.readyState === WS_READY_STATE_CLOSING) {
-      socket.close();
-    }
-  } catch (error) {
-    console.error("safeCloseWebSocket error", error);
-  }
+	try {
+		if (socket.readyState === WS_READY_STATE_OPEN || socket.readyState === WS_READY_STATE_CLOSING) {
+			socket.close();
+		}
+	} catch (error) {
+		console.error('safeCloseWebSocket error', error);
+	}
 }
+
+const byteToHex = [];
+
+for (let i = 0; i < 256; ++i) {
+	byteToHex.push((i + 256).toString(16).slice(1));
+}
+
+function unsafeStringify(arr, offset = 0) {
+	return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+}
+
+function stringify(arr, offset = 0) {
+	const uuid = unsafeStringify(arr, offset);
+	if (!isValidUUID(uuid)) {
+		throw TypeError("Stringified UUID is invalid");
+	}
+	return uuid;
+}
+
+
+/**
+ * Handles outbound UDP traffic by transforming the data into DNS queries and sending them over a WebSocket connection.
+ * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket connection to send the DNS queries over.
+ * @param {ArrayBuffer} vlessResponseHeader The VLESS response header.
+ * @param {(string) => void} log The logging function.
+ * @returns {{write: (chunk: Uint8Array) => void}} An object with a write method that accepts a Uint8Array chunk to write to the transform stream.
+ */
 async function handleUDPOutBound(webSocket, vlessResponseHeader, log) {
-  let isVlessHeaderSent = false;
-  const transformStream = new TransformStream({
-    start(controller) {
-    },
-    transform(chunk, controller) {
-      for (let index = 0; index < chunk.byteLength; ) {
-        const lengthBuffer = chunk.slice(index, index + 2);
-        const udpPakcetLength = new DataView(lengthBuffer).getUint16(0);
-        const udpData = new Uint8Array(
-          chunk.slice(index + 2, index + 2 + udpPakcetLength)
-        );
-        index = index + 2 + udpPakcetLength;
-        controller.enqueue(udpData);
-      }
-    },
-    flush(controller) {
-    }
-  });
-  transformStream.readable.pipeTo(new WritableStream({
-    async write(chunk) {
-      const resp = await fetch(
-        "https://1.1.1.1/dns-query",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/dns-message"
-          },
-          body: chunk
-        }
-      );
-      const dnsQueryResult = await resp.arrayBuffer();
-      const udpSize = dnsQueryResult.byteLength;
-      const udpSizeBuffer = new Uint8Array([udpSize >> 8 & 255, udpSize & 255]);
-      if (webSocket.readyState === WS_READY_STATE_OPEN) {
-        log(`doh success and dns message length is ${udpSize}`);
-        if (isVlessHeaderSent) {
-          webSocket.send(await new Blob([udpSizeBuffer, dnsQueryResult]).arrayBuffer());
-        } else {
-          webSocket.send(await new Blob([vlessResponseHeader, udpSizeBuffer, dnsQueryResult]).arrayBuffer());
-          isVlessHeaderSent = true;
-        }
-      }
-    }
-  })).catch((error) => {
-    log("dns udp has error" + error);
-  });
-  const writer = transformStream.writable.getWriter();
-  return {
-    write(chunk) {
-      writer.write(chunk);
-    }
-  };
+
+	let isVlessHeaderSent = false;
+	const transformStream = new TransformStream({
+		start(controller) {
+
+		},
+		transform(chunk, controller) {
+			// udp message 2 byte is the the length of udp data
+			// TODO: this should have bug, beacsue maybe udp chunk can be in two websocket message
+			for (let index = 0; index < chunk.byteLength;) {
+				const lengthBuffer = chunk.slice(index, index + 2);
+				const udpPakcetLength = new DataView(lengthBuffer).getUint16(0);
+				const udpData = new Uint8Array(
+					chunk.slice(index + 2, index + 2 + udpPakcetLength)
+				);
+				index = index + 2 + udpPakcetLength;
+				controller.enqueue(udpData);
+			}
+		},
+		flush(controller) {
+		}
+	});
+
+	// only handle dns udp for now
+	transformStream.readable.pipeTo(new WritableStream({
+		async write(chunk) {
+			const resp = await fetch(dohURL, // dns server url
+				{
+					method: 'POST',
+					headers: {
+						'content-type': 'application/dns-message',
+					},
+					body: chunk,
+				})
+			const dnsQueryResult = await resp.arrayBuffer();
+			const udpSize = dnsQueryResult.byteLength;
+			// console.log([...new Uint8Array(dnsQueryResult)].map((x) => x.toString(16)));
+			const udpSizeBuffer = new Uint8Array([(udpSize >> 8) & 0xff, udpSize & 0xff]);
+			if (webSocket.readyState === WS_READY_STATE_OPEN) {
+				log(`doh success and dns message length is ${udpSize}`);
+				if (isVlessHeaderSent) {
+					webSocket.send(await new Blob([udpSizeBuffer, dnsQueryResult]).arrayBuffer());
+				} else {
+					webSocket.send(await new Blob([vlessResponseHeader, udpSizeBuffer, dnsQueryResult]).arrayBuffer());
+					isVlessHeaderSent = true;
+				}
+			}
+		}
+	})).catch((error) => {
+		log('dns udp has error' + error)
+	});
+
+	const writer = transformStream.writable.getWriter();
+
+	return {
+		/**
+		 * 
+		 * @param {Uint8Array} chunk 
+		 */
+		write(chunk) {
+			writer.write(chunk);
+		}
+	};
 }
-export {
-  worker_default as default
-};
-//# sourceMappingURL=worker.js.map
+
+/**
+ *
+ * @param {string} userID - single or comma separated userIDs
+ * @param {string | null} hostName
+ * @returns {string}
+ */
+function getVLESSConfig(userIDs, hostName) {
+	const commonUrlPart = `:443?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=%2F%3Fed%3D2048#${hostName}`;
+	const separator = "---------------------------------------------------------------";
+	const hashSeparator = "################################################################";
+
+	// Split the userIDs into an array
+	let userIDArray = userIDs.split(',');
+
+	// Prepare output array
+	let output = [];
+	let header = [];
+	const clash_link = `https://subconverter.do.xn--b6gac.eu.org/sub?target=clash&url=https://${hostName}/sub/${userIDArray[0]}?format=clash&insert=false&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
+	header.push(`\n<p align="center"><img src="https://cloudflare-ipfs.com/ipfs/bafybeigd6i5aavwpr6wvnwuyayklq3omonggta4x2q7kpmgafj357nkcky" alt="图片描述" style="margin-bottom: -50px;">`);
+	header.push(`\n<b style=" font-size: 15px;" >Welcome! This function generates configuration for VLESS protocol. If you found this useful, please check our GitHub project for more:</b>\n`);
+	header.push(`<b style=" font-size: 15px;" >欢迎！这是生成 VLESS 协议的配置。如果您发现这个项目很好用，请查看我们的 GitHub 项目给我一个star：</b>\n`);
+	header.push(`\n<a href="https://github.com/3Kmfi6HP/EDtunnel" target="_blank">EDtunnel - https://github.com/3Kmfi6HP/EDtunnel</a>\n`);
+	header.push(`\n<iframe src="https://ghbtns.com/github-btn.html?user=USERNAME&repo=REPOSITORY&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>\n\n`.replace(/USERNAME/g, "3Kmfi6HP").replace(/REPOSITORY/g, "EDtunnel"));
+	header.push(`<a href="//${hostName}/sub/${userIDArray[0]}" target="_blank">VLESS 节点订阅连接</a>\n<a href="clash://install-config?url=${encodeURIComponent(clash_link)}" target="_blank">Clash 节点订阅连接</a>\n<a href="${clash_link}" target="_blank">Clash 节点订阅连接2</a></p>\n`);
+	header.push(``);
+
+	// Generate output string for each userID
+	userIDArray.forEach((userID) => {
+		const vlessMain = `vless://${userID}@${hostName}${commonUrlPart}`;
+		const vlessSec = `vless://${userID}@${proxyIP}${commonUrlPart}`;
+		output.push(`UUID: ${userID}`);
+		output.push(`${hashSeparator}\nv2ray default ip\n${separator}\n${vlessMain}\n${separator}`);
+		output.push(`${hashSeparator}\nv2ray with best ip\n${separator}\n${vlessSec}\n${separator}`);
+	});
+	output.push(`${hashSeparator}\n# Clash Proxy Provider 配置格式(configuration format)\nproxy-groups:\n  - name: UseProvider\n	type: select\n	use:\n	  - provider1\n	proxies:\n	  - Proxy\n	  - DIRECT\nproxy-providers:\n  provider1:\n	type: http\n	url: https://${hostName}/sub/${userIDArray[0]}?format=clash\n	interval: 3600\n	path: ./provider1.yaml\n	health-check:\n	  enable: true\n	  interval: 600\n	  # lazy: true\n	  url: http://www.gstatic.com/generate_204\n\n${hashSeparator}`);
+
+	// HTML Head with CSS
+	const htmlHead = `
+    <head>
+        <title>EDtunnel: VLESS configuration</title>
+        <meta name="description" content="This is a tool for generating VLESS protocol configurations. Give us a star on GitHub https://github.com/3Kmfi6HP/EDtunnel if you found it useful!">
+		<meta name="keywords" content="EDtunnel, cloudflare pages, cloudflare worker, severless">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta property="og:site_name" content="EDtunnel: VLESS configuration" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="EDtunnel - VLESS configuration and subscribe output" />
+        <meta property="og:description" content="Use cloudflare pages and worker severless to implement vless protocol" />
+        <meta property="og:url" content="https://${hostName}/" />
+        <meta property="og:image" content="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`vless://${userIDs.split(',')[0]}@${hostName}${commonUrlPart}`)}" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="EDtunnel - VLESS configuration and subscribe output" />
+        <meta name="twitter:description" content="Use cloudflare pages and worker severless to implement vless protocol" />
+        <meta name="twitter:url" content="https://${hostName}/" />
+        <meta name="twitter:image" content="https://cloudflare-ipfs.com/ipfs/bafybeigd6i5aavwpr6wvnwuyayklq3omonggta4x2q7kpmgafj357nkcky" />
+        <meta property="og:image:width" content="1500" />
+        <meta property="og:image:height" content="1500" />
+
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 10px;
+        }
+
+        a {
+            color: #1a0dab;
+            text-decoration: none;
+        }
+		img {
+			max-width: 100%;
+			height: auto;
+		}
+		
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+        }
+		/* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #333;
+                color: #f0f0f0;
+            }
+
+            a {
+                color: #9db4ff;
+            }
+
+            pre {
+                background-color: #282a36;
+                border-color: #6272a4;
+            }
+        }
+        </style>
+    </head>
+    `;
+
+	// Join output with newlines, wrap inside <html> and <body>
+	return `
+    <html>
+    ${htmlHead}
+    <body>
+    <pre style="
+    background-color: transparent;
+    border: none;
+">${header.join('')}</pre><pre>${output.join('\n')}</pre>
+    </body>
+</html>`;
+}
+
+
+function createVLESSSub(userID_Path, hostName) {
+	let portArray_http = [80, 8080, 8880, 2052, 2086, 2095, 2082];
+	let portArray_https = [443, 8443, 2053, 2096, 2087, 2083];
+
+	// Split the userIDs into an array
+	let userIDArray = userID_Path.includes(',') ? userID_Path.split(',') : [userID_Path];
+
+	// Prepare output array
+	let output = [];
+
+	// Generate output string for each userID
+	userIDArray.forEach((userID) => {
+		// Check if the hostName is a Cloudflare Pages domain, if not, generate HTTP configurations
+		// reasons: pages.dev not support http only https
+		if (!hostName.includes('pages.dev')) {
+			// Iterate over all ports for http
+			portArray_http.forEach((port) => {
+				const commonUrlPart_http = `:${port}?encryption=none&security=none&fp=random&type=ws&host=${hostName}&path=%2F%3Fed%3D2048#${hostName}-HTTP-${port}`;
+				const vlessMainHttp = `vless://${userID}@${hostName}${commonUrlPart_http}`;
+
+				// For each proxy IP, generate a VLESS configuration and add to output
+				proxyIPs.forEach((proxyIP) => {
+					const vlessSecHttp = `vless://${userID}@${proxyIP}${commonUrlPart_http}-${proxyIP}-EDtunnel`;
+					output.push(`${vlessMainHttp}`);
+					output.push(`${vlessSecHttp}`);
+				});
+			});
+		}
+		// Iterate over all ports for https
+		portArray_https.forEach((port) => {
+			const commonUrlPart_https = `:${port}?encryption=none&security=tls&sni=${hostName}&fp=random&type=ws&host=${hostName}&path=%2F%3Fed%3D2048#${hostName}-HTTPS-${port}`;
+			const vlessMainHttps = `vless://${userID}@${hostName}${commonUrlPart_https}`;
+
+			// For each proxy IP, generate a VLESS configuration and add to output
+			proxyIPs.forEach((proxyIP) => {
+				const vlessSecHttps = `vless://${userID}@${proxyIP}${commonUrlPart_https}-${proxyIP}-EDtunnel`;
+				output.push(`${vlessMainHttps}`);
+				output.push(`${vlessSecHttps}`);
+			});
+		});
+	});
+
+	// Join output with newlines
+	return output.join('\n');
+}
+
